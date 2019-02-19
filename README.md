@@ -7,6 +7,8 @@ side of things)
 
 ## Usage
 
+go get -tags kerberos github.com/zhujiaqi/gosasl
+
 go build --tags=kerberos
 
 ```go
