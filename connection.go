@@ -1,10 +1,12 @@
 package impalathing
 
 import (
+    "time"
 	"fmt"
+    "context"
 	"git.apache.org/thrift.git/lib/go/thrift"
-	impala "github.com/koblas/impalathing/services/impalaservice"
-	"github.com/koblas/impalathing/services/beeswax"
+	"github.com/zhujiaqi/impalathing/services/beeswax"
+	impala "github.com/zhujiaqi/impalathing/services/impalaservice"
 )
 
 type Options struct {
@@ -17,27 +19,42 @@ var (
 )
 
 type Connection struct {
-	client  *impala.ImpalaServiceClient
-	handle  *beeswax.QueryHandle
-    transport thrift.TTransport
-	options Options
+	client    *impala.ImpalaServiceClient
+	handle    *beeswax.QueryHandle
+	transport thrift.TTransport
+	options   Options
 }
 
-func Connect(host string, port int, options Options) (*Connection, error) {
-	socket, err := thrift.NewTSocket(fmt.Sprintf("%s:%d", host, port))
+func Connect(host string, port int, options Options, useKerberos bool) (*Connection, error) {
+	socket, err := thrift.NewTSocketTimeout(fmt.Sprintf("%s:%d", host, port), 10000 * time.Millisecond)
 
 	if err != nil {
 		return nil, err
 	}
 
-	transportFactory := thrift.NewTBufferedTransportFactory(24 * 1024 * 1024)
+	var transport thrift.TTransport
+	if useKerberos {
+		saslConfiguration := map[string]string{
+            "service": "impala",
+		}
+		transport, err = NewTSaslTransport(socket, host, "GSSAPI", saslConfiguration)
+        fmt.Println(saslConfiguration)
+		if err != nil {
+			return nil, err
+		}
+        fmt.Println("NewTSaslTransport OK")
+	} else {
+		transportFactory := thrift.NewTBufferedTransportFactory(24 * 1024 * 1024)
+		transport, _ = transportFactory.GetTransport(socket)
+        fmt.Println("ERROR, wrong Transport")
+	}
 	protocolFactory := thrift.NewTBinaryProtocolFactoryDefault()
 
-	transport := transportFactory.GetTransport(socket)
-
-	if err := transport.Open(); err != nil {
+    if err := transport.Open(); err != nil {
 		return nil, err
 	}
+
+    fmt.Println("Transport OPEN")
 
 	client := impala.NewImpalaServiceClientFactory(transport, protocolFactory)
 
@@ -51,7 +68,7 @@ func (c *Connection) isOpen() bool {
 func (c *Connection) Close() error {
 	if c.isOpen() {
 		if c.handle != nil {
-			_, err := c.client.Cancel(c.handle)
+			_, err := c.client.Cancel(context.Background(), c.handle)
 			if err != nil {
 				return err
 			}
@@ -59,7 +76,7 @@ func (c *Connection) Close() error {
 		}
 
 		c.transport.Close()
-        c.client = nil
+		c.client = nil
 	}
 	return nil
 }
@@ -70,7 +87,7 @@ func (c *Connection) Query(query string) (RowSet, error) {
 	bquery.Query = query
 	bquery.Configuration = []string{}
 
-	handle, err := c.client.Query(&bquery)
+	handle, err := c.client.Query(context.Background(), &bquery)
 
 	if err != nil {
 		return nil, err

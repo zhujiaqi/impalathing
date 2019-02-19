@@ -14,14 +14,15 @@ import (
     "log"
     "fmt"
     "time"
-    "github.com/koblas/impalathing"
+    "github.com/zhujiaqi/impalathing"
 )
 
 func main() {
     host := "impala-host"
     port := 21000
 
-    con, err := impalathing.Connect(host, port, impalathing.DefaultOptions)
+    useKerberos := true
+    con, err := impalathing.Connect(host, port, impalathing.DefaultOptions, useKerberos)
 
     if err != nil {
         log.Fatal("Error connecting", err)

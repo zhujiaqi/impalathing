@@ -1,6 +1,7 @@
 package impalathing
 
 import (
+    "context"
 	"errors"
 	"fmt"
 	"log"
@@ -8,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	impala "github.com/koblas/impalathing/services/impalaservice"
-	"github.com/koblas/impalathing/services/beeswax"
+	impala "github.com/zhujiaqi/impalathing/services/impalaservice"
+	"github.com/zhujiaqi/impalathing/services/beeswax"
 )
 
 type rowSet struct {
@@ -41,7 +42,7 @@ type RowSet interface {
 	Poll() (*Status, error)
 	Wait() (*Status, error)
 	FetchAll() []map[string]interface{}
-	MapScan(dest map[string]interface{}) error
+    MapScan(dest map[string]interface{}) error
 }
 
 // Represents job status, including success state and time the
@@ -52,7 +53,7 @@ type Status struct {
 }
 
 func newRowSet(client *impala.ImpalaServiceClient, handle *beeswax.QueryHandle, options Options) RowSet {
-  return &rowSet{client: client, handle: handle, options: options, columnNames: nil, offset: 0, rowSet: nil, 
+  return &rowSet{client: client, handle: handle, options: options, columnNames: nil, offset: 0, rowSet: nil,
   hasMore: true, ready: false, metadata: nil, nextRow: nil}
 }
 
@@ -69,7 +70,7 @@ func (s *Status) IsComplete() bool {
 
 // Issue a thrift call to check for the job's current status.
 func (r *rowSet) Poll() (*Status, error) {
-	state, err := r.client.GetState(r.handle)
+	state, err := r.client.GetState(context.Background(), r.handle)
 
 	if err != nil {
 		return nil, fmt.Errorf("Error getting status: %v", err)
@@ -132,14 +133,14 @@ func (r *rowSet) Next() bool {
 			return false
 		}
 
-		resp, err := r.client.Fetch(r.handle, false, 1000000)
+		resp, err := r.client.Fetch(context.Background(), r.handle, false, 1000000)
 		if err != nil {
 			log.Printf("FetchResults failed: %v\n", err)
 			return false
 		}
 
 		if r.metadata == nil {
-		  r.metadata, err = r.client.GetResultsMetadata(r.handle)
+		  r.metadata, err = r.client.GetResultsMetadata(context.Background(), r.handle)
 		  if err != nil {
 				log.Printf("GetResultsMetadata failed: %v\n", err)
 			  }
@@ -243,7 +244,7 @@ func (r *rowSet) convertRawValue(raw string, hiveType string) (interface{}, erro
 		}
 }
 
-//Fetch all rows and convert to a []map[string]interface{} with 
+//Fetch all rows and convert to a []map[string]interface{} with
 //appropriate type conversion already carried out
 func (r *rowSet) FetchAll() ([]map[string]interface{} ) {
 	response := make([]map[string]interface{},0)
@@ -275,13 +276,12 @@ func (r *rowSet) Columns() []string {
 
 // MapScan scans a single Row into the dest map[string]interface{}.
 func (r *rowSet) MapScan(row map[string]interface{}) error {
-	for i, val := range r.nextRow {
-		conv, err := r.convertRawValue(val, r.metadata.Schema.FieldSchemas[i].Type)
-		if err != nil {
-			return err
-		}
-		row[r.metadata.Schema.FieldSchemas[i].Name] = conv
-	}
-	return nil
+    for i, val := range r.nextRow {
+        conv, err := r.convertRawValue(val, r.metadata.Schema.FieldSchemas[i].Type)
+        if err != nil {
+            return err
+        }
+        row[r.metadata.Schema.FieldSchemas[i].Name] = conv
+    }
+    return nil
 }
-
