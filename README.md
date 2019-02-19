@@ -7,6 +7,8 @@ side of things)
 
 ## Usage
 
+go build --tags=kerberos
+
 ```go
 package main
 
