@@ -1,12 +1,12 @@
 package impalathing
 
 import (
-    "time"
+	"context"
 	"fmt"
-    "context"
 	"git.apache.org/thrift.git/lib/go/thrift"
 	"github.com/zhujiaqi/impalathing/services/beeswax"
 	impala "github.com/zhujiaqi/impalathing/services/impalaservice"
+	"time"
 )
 
 type Options struct {
@@ -26,7 +26,7 @@ type Connection struct {
 }
 
 func Connect(host string, port int, options Options, useKerberos bool) (*Connection, error) {
-	socket, err := thrift.NewTSocketTimeout(fmt.Sprintf("%s:%d", host, port), 10000 * time.Millisecond)
+	socket, err := thrift.NewTSocketTimeout(fmt.Sprintf("%s:%d", host, port), 10000*time.Millisecond)
 
 	if err != nil {
 		return nil, err
@@ -35,7 +35,7 @@ func Connect(host string, port int, options Options, useKerberos bool) (*Connect
 	var transport thrift.TTransport
 	if useKerberos {
 		saslConfiguration := map[string]string{
-            "service": "impala",
+			"service": "impala",
 		}
 		transport, err = NewTSaslTransport(socket, host, "GSSAPI", saslConfiguration)
 		if err != nil {
@@ -47,10 +47,9 @@ func Connect(host string, port int, options Options, useKerberos bool) (*Connect
 	}
 	protocolFactory := thrift.NewTBinaryProtocolFactoryDefault()
 
-    if err := transport.Open(); err != nil {
+	if err := transport.Open(); err != nil {
 		return nil, err
 	}
-
 
 	client := impala.NewImpalaServiceClientFactory(transport, protocolFactory)
 

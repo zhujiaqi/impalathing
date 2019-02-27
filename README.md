@@ -26,6 +26,12 @@ then
     go build --tags=kerberos
 `
 
+before starting your application, you should kinit first, for example
+
+`
+    kinit -k -t impala.keytab impala/host@DOMAIN.COM
+`
+
 ```go
 package main
 
