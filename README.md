@@ -5,6 +5,15 @@ It's based on [hivething](https://github.com/derekgr/hivething)
 Working on this you quickly realize that having strings deliminated by tabs is a ugly API... (That's the thrift
 side of things)
 
+## Update
+
+this is a fork from [impalathing](https://github.com/koblas/impalathing).
+
+impalathing is great but not very update-to-date, So
+
+1. I recompiled the thrift files using Go 1.9 and Thrift 0.12
+2. Now you can connect to a kerberos impala as well!
+
 ## Usage
 
 To add kerberos support this requires header files to build against the GSSAPI C library. They can be installed with:
