@@ -38,15 +38,12 @@ func Connect(host string, port int, options Options, useKerberos bool) (*Connect
             "service": "impala",
 		}
 		transport, err = NewTSaslTransport(socket, host, "GSSAPI", saslConfiguration)
-        fmt.Println(saslConfiguration)
 		if err != nil {
 			return nil, err
 		}
-        fmt.Println("NewTSaslTransport OK")
 	} else {
 		transportFactory := thrift.NewTBufferedTransportFactory(24 * 1024 * 1024)
 		transport, _ = transportFactory.GetTransport(socket)
-        fmt.Println("ERROR, wrong Transport")
 	}
 	protocolFactory := thrift.NewTBinaryProtocolFactoryDefault()
 
@@ -54,7 +51,6 @@ func Connect(host string, port int, options Options, useKerberos bool) (*Connect
 		return nil, err
 	}
 
-    fmt.Println("Transport OPEN")
 
 	client := impala.NewImpalaServiceClientFactory(transport, protocolFactory)
 

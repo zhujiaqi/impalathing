@@ -6,7 +6,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"git.apache.org/thrift.git/lib/go/thrift"
-	"github.com/zhujiaqi/gosasl"
+	"github.com/beltran/gosasl"
 	"io"
 )
 

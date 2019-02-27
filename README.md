@@ -7,9 +7,17 @@ side of things)
 
 ## Usage
 
-go get -tags kerberos github.com/zhujiaqi/gosasl
+in order to use kerberos, you need an extra dependency
 
-go build --tags=kerberos
+`
+    go get -tags kerberos github.com/beltran/gosasl
+`
+
+then
+
+`
+    go build --tags=kerberos
+`
 
 ```go
 package main
